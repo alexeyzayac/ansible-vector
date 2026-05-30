@@ -1,0 +1,46 @@
+---
+
+- name: Обновление кэша пакетов YUM
+  ansible.builtin.yum:
+    update_cache: true
+  tags:
+    - vector
+    - system
+
+- name: Установка ca-certificates
+  ansible.builtin.yum:
+    name: ca-certificates
+    state: present
+  tags:
+    - vector
+
+- name: Скачивание RPM-пакета Vector
+  ansible.builtin.get_url:
+    url: "https://packages.timber.io/vector/{{ vector_version }}/vector-{{ vector_version }}-1.x86_64.rpm"
+    dest: "/tmp/vector-{{ vector_version }}.rpm"
+    mode: '0644'
+  tags:
+    - vector
+
+- name: Установка пакета Vector с отключением проверки GPG
+  ansible.builtin.command: dnf install -y --nogpgcheck /tmp/vector-{{ vector_version }}.rpm
+  notify: Запустить сервис vector
+  tags:
+    - vector
+
+- name: Развёртывание конфигурационного файла Vector из шаблона
+  ansible.builtin.template:
+    src: vector.yaml.j2
+    dest: "{{ vector_config_path }}"
+    mode: '0644'
+  notify: Перезапустить сервис vector
+  tags:
+    - vector
+    - vector_config
+
+- name: Принудительный запуск сервиса
+  ansible.builtin.meta: flush_handlers
+  tags:
+    - vector
+
+...

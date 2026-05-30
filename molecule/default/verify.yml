@@ -1,0 +1,40 @@
+---
+
+- name: Verify
+  hosts: all
+  tasks:
+    - name: Проверить существование файла конфигурации Vector
+      ansible.builtin.stat:
+        path: /etc/vector/vector.yaml
+      register: vector_config
+
+    - name: Убедиться, что файл конфигурации существует
+      ansible.builtin.assert:
+        that:
+          - vector_config.stat.exists
+        fail_msg: "Файл конфигурации Vector не существует"
+
+    - name: Проверить валидность конфигурации Vector
+      ansible.builtin.command: vector validate /etc/vector/vector.yaml
+      register: validate_result
+      changed_when: false
+
+    - name: Убедиться, что конфигурация валидна
+      ansible.builtin.assert:
+        that:
+          - validate_result.rc == 0
+        fail_msg: "Конфигурация Vector невалидна"
+
+    - name: Проверить, запущен ли сервис Vector
+      ansible.builtin.command: systemctl is-active vector
+      register: vector_service
+      changed_when: false
+      failed_when: false
+
+    - name: Убедиться, что сервис Vector активен
+      ansible.builtin.assert:
+        that:
+          - vector_service.stdout == "active"
+        fail_msg: "Сервис Vector не активен"
+
+...

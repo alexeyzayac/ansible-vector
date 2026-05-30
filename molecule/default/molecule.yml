@@ -1,0 +1,68 @@
+---
+
+dependency:
+  name: galaxy
+
+driver:
+  name: docker
+
+lint: |
+  ansible-lint .
+  yamllint .
+
+platforms:
+  - name: ubuntu-ansible
+    image: ubuntu_ansible:latest
+    pre_build_image: true
+    privileged: true
+    cgroupns_mode: host
+    stop_signal: SIGRTMIN+3
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    command: /lib/systemd/systemd
+
+  - name: oraclelinux-ansible
+    image: oraclelinux_ansible:latest
+    pre_build_image: true
+    privileged: true
+    cgroupns_mode: host
+    stop_signal: SIGRTMIN+3
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    command: /lib/systemd/systemd
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      pipelining: true
+
+  env:
+    ANSIBLE_PIPELINING: "True"
+    ANSIBLE_ALLOW_BROKEN_CONDITIONALS: "true"
+
+  inventory:
+    host_vars:
+      ubuntu-ansible:
+        ansible_connection: docker
+        ansible_user: root
+        ansible_shell_type: sh
+        ansible_python_interpreter: /usr/bin/python3
+      oraclelinux-ansible:
+        ansible_connection: docker
+        ansible_user: root
+        ansible_shell_type: sh
+        ansible_python_interpreter: /usr/bin/python3
+
+verifier:
+  name: ansible
+
+scenario:
+  test_sequence:
+    - destroy
+    - create
+    - converge
+    - verify
+    - destroy
+
+...

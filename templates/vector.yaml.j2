@@ -1,16 +1,12 @@
-api:
-  enabled: true
-  address: "127.0.0.1:8686"
-
 sources:
-  my_source_id:
+  demo_logs:
     type: demo_logs
+    format: json
     interval: 1
 
 sinks:
-  my_sink_id:
+  console:
     type: console
-    inputs:
-      - my_source_id
+    inputs: ["demo_logs"]
     encoding:
       codec: json
